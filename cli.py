@@ -54,23 +54,29 @@ def split_videos(*, folder=VIDEOS_FOLDER, out=VIDEOS_PARTS_FOLDER, duration_sec=
         call(cmd, shell=True)
 
 
-def add_videos(label, *, folder=VIDEOS_FOLDER):
-    if models.LabelType.objects.filter(name=label).count() == 0:
-        print('label type not found in the database, creating a label type named "{}"'.format(label))
-        label_type = _create_label_type(label)
+def add_videos(*, label=None, folder=VIDEOS_FOLDER):
+    if label is None:
+        labels = [l.name for l in models.LabelType.objects.all()]
     else:
-        label_type = models.LabelType.objects.get(name=label)
-    print('---> Using "{}" as a LabelType'.format(label))
-    print('Adding videos...')
-    pattern = '*.{}'.format(FORMAT)
-    for filename in glob.glob(os.path.join(folder, label, pattern)):
-        print('Adding "{}"'.format(filename))
-        try:
-            video = models.Video(url=filename, user=admin, query_label_type=label_type)
-            video.save()
-        except django.db.utils.IntegrityError as ex:
-            print(ex)
-            print('Video already exists, passing...')
+        labels = [label]
+    
+    for label in labels:
+        if models.LabelType.objects.filter(name=label).count() == 0:
+            print('label type not found in the database, creating a label type named "{}"'.format(label))
+            label_type = _create_label_type(label)
+        else:
+            label_type = models.LabelType.objects.get(name=label)
+        print('---> Using "{}" as a LabelType'.format(label))
+        print('Adding videos...')
+        pattern = '*.{}'.format(FORMAT)
+        for filename in glob.glob(os.path.join(folder, label, pattern)):
+            print('Adding "{}"'.format(filename))
+            try:
+                video = models.Video(url=filename, user=admin, query_label_type=label_type)
+                video.save()
+            except django.db.utils.IntegrityError as ex:
+                print(ex)
+                print('Video already exists, passing...')
 
 
 def _create_label_type(name):
