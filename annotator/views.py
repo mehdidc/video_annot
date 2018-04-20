@@ -22,8 +22,8 @@ def nothing(request):
 @login_required
 def random_video(request):
     try:
-        _video_process_request(request)
-    except ValueError:
+        _insert_annotation_if_post_request(request)
+    except AlreadyAnnotatedError:
         return render(request, 'annotator/annotated.html')
     try:
         # return one non-annotated video randomly
@@ -38,32 +38,31 @@ def random_video(request):
     return render(request, 'annotator/video.html', context)
 
 
+@login_required
 def video(request, video_id):
-    _video_process_request(request)
     try:
-        _video_process_request(request)
-    except ValueError:
+        _insert_annotation_if_post_request(request)
+    except AlreadyAnnotatedError:
         return render(request, 'annotator/annotated.html')
-    
     video = Video.objects.get(id=video_id)
-    
     nb = Label.objects.filter(user=request.user, video=video).count()
     if nb > 0:
         return render(request, 'annotator/annotated.html')
     context = {'video': video}
     return render(request, 'annotator/video.html', context)
 
-def _video_process_request(request):
+
+def _insert_annotation_if_post_request(request):
     if request.method == 'POST':
         answer = request.POST.get('submit')
         video_id = int(request.POST.get('video_id'))
         video = Video.objects.get(id=video_id)
-        
-        assert answer in ('Yes', 'No')
+        if answer not in ('Yes', 'No'):
+            raise ValueError('Issue in the form: "answer" should be either "Yes" or "No"')
         answer = True if answer == 'Yes' else False
         nb = Label.objects.filter(user=request.user, video=video).count()
         if nb > 0:
-            raise ValueError('already annotated')
+            raise AlreadyAnnotatedError()
         label = Label(
             label_type=video.query_label_type,
             video=video,
@@ -71,3 +70,7 @@ def _video_process_request(request):
             video_has_label=answer,
         )
         label.save()
+
+
+class AlreadyAnnotatedError(Exception):
+    pass
