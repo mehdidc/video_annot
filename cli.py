@@ -11,11 +11,10 @@ django.setup()
 from django.contrib.auth.models import User
 
 # Import video settings
-from video_annot.settings import VIDEOS_FOLDER
-from video_annot.settings import VIDEOS_PARTS_FOLDER
-from video_annot.settings import ADMIN
-from video_annot.settings import FORMAT
-
+from .site.settings import VIDEOS_FOLDER
+from .site.settings import VIDEOS_PARTS_FOLDER
+from .site.settings import ADMIN
+from .site.settings import FORMAT
 
 from annotator import models
 
