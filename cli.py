@@ -12,6 +12,7 @@ from django.contrib.auth.models import User
 
 # Import video settings
 from video_annot.settings import VIDEOS_FOLDER
+from video_annot.settings import VIDEOS_PARTS_FOLDER
 from video_annot.settings import ADMIN
 from video_annot.settings import FORMAT
 
@@ -36,19 +37,24 @@ def download(query, *, nb=10, max_duration=60, other='', label=None, out=VIDEOS_
     call(cmd, shell=True)
 
 
-def split_videos(*, folder=VIDEOS_FOLDER, duration_sec=5):
+def split_videos(*, folder=VIDEOS_FOLDER, out=VIDEOS_PARTS_FOLDER, duration_sec=5):
     for filename in glob.glob(os.path.join(folder, '**', '*.{}'.format(FORMAT))):
-        filename_without_ext, _ = os.path.splitext(filename)
-        tpl = 'ffmpeg -i {} -threads 4 -vcodec copy -f segment -segment_time {} {}_part_%06d.{}'
+        out_folder = os.path.dirname(filename).replace(folder, out)
+        if not os.path.exists(out_folder):
+            os.makedirs(out_folder)
+        filename_without_ext, _ = os.path.splitext(os.path.basename(filename))
+        tpl = 'ffmpeg -i {} -threads 4 -vcodec copy -f segment -segment_time {} {}/{}_part_%06d.{}'
         cmd = tpl.format(
             filename,
             duration_sec,
+            out_folder,
             filename_without_ext,
             FORMAT
         )
         call(cmd, shell=True)
 
-def add_videos(label, *, pattern=''):
+
+def add_videos(label, *, folder=VIDEOS_FOLDER):
     if models.LabelType.objects.filter(name=label).count() == 0:
         print('label type not found in the database, creating a label type named "{}"'.format(label))
         label_type = _create_label_type(label)
@@ -56,11 +62,8 @@ def add_videos(label, *, pattern=''):
         label_type = models.LabelType.objects.get(name=label)
     print('---> Using "{}" as a LabelType'.format(label))
     print('Adding videos...')
-
-    if pattern == '':
-        pattern = '*.{}'.format(FORMAT)
-    
-    for filename in glob.glob(os.path.join(VIDEOS_FOLDER, label, pattern)):
+    pattern = '*.{}'.format(FORMAT)
+    for filename in glob.glob(os.path.join(folder, label, pattern)):
         print('Adding "{}"'.format(filename))
         try:
             video = models.Video(url=filename, user=admin, query_label_type=label_type)

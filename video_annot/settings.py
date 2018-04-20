@@ -134,9 +134,9 @@ STATICFILES_DIRS = [
 ]
 
 VIDEOS_FOLDER = 'videos'
+VIDEOS_PARTS_FOLDER = 'videos_parts'
 ADMIN = 'admin'
 FORMAT = 'mp4'
 
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
-
