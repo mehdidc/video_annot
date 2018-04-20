@@ -10,9 +10,12 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "video_annot.settings")
 django.setup()
 from django.contrib.auth.models import User
 
+# Import video settings
 from video_annot.settings import VIDEOS_FOLDER
 from video_annot.settings import ADMIN
 from video_annot.settings import FORMAT
+
+
 from annotator import models
 
 
@@ -24,24 +27,40 @@ def download(query, *, nb=10, max_duration=60, other='', label=None, out=VIDEOS_
     if label is None:
         label = _slug(query)
     folder = os.path.join(out, label)
-    path = os.path.join(folder, "%(id)s.mp4")
+    path = os.path.join(folder, "%(id)s.{}".format(FORMAT))
     try:
         os.makedirs(folder)
     except FileExistsError:
         pass
-    cmd = 'youtube-dl --format mp4 --merge-output-format mp4 --match-filter="{}" --output="{}" {} "{}"'.format(filters, path, other, full_query)
+    cmd = 'youtube-dl --format {} --merge-output-format {} --match-filter="{}" --output="{}" {} "{}"'.format(FORMAT, FORMAT, filters, path, other, full_query)
     call(cmd, shell=True)
 
 
-def add_videos(label):
+def split_videos(*, folder=VIDEOS_FOLDER, duration_sec=5):
+    for filename in glob.glob(os.path.join(folder, '**', '*.{}'.format(FORMAT))):
+        filename_without_ext, _ = os.path.splitext(filename)
+        tpl = 'ffmpeg -i {} -threads 4 -vcodec copy -f segment -segment_time {} {}_part_%06d.{}'
+        cmd = tpl.format(
+            filename,
+            duration_sec,
+            filename_without_ext,
+            FORMAT
+        )
+        call(cmd, shell=True)
+
+def add_videos(label, *, pattern=''):
     if models.LabelType.objects.filter(name=label).count() == 0:
-        print('label not found, creating LabelType named "{}"'.format(label))
+        print('label type not found in the database, creating a label type named "{}"'.format(label))
         label_type = _create_label_type(label)
     else:
         label_type = models.LabelType.objects.get(name=label)
     print('---> Using "{}" as a LabelType'.format(label))
     print('Adding videos...')
-    for filename in glob.glob(os.path.join(VIDEOS_FOLDER, label, '*.mp4')):
+
+    if pattern == '':
+        pattern = '*.{}'.format(FORMAT)
+    
+    for filename in glob.glob(os.path.join(VIDEOS_FOLDER, label, pattern)):
         print('Adding "{}"'.format(filename))
         try:
             video = models.Video(url=filename, user=admin, query_label_type=label_type)
@@ -49,6 +68,7 @@ def add_videos(label):
         except django.db.utils.IntegrityError as ex:
             print(ex)
             print('Video already exists, passing...')
+
 
 def _create_label_type(name):
     return models.LabelType(name=name, user=admin).save()
@@ -59,5 +79,6 @@ def _slug(s):
 def _unslug(s):
     return s.replace('_', ' ')
 
+
 if __name__ == '__main__':
-    run([download, add_videos])
+    run([download, add_videos, split_videos])
