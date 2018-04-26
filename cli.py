@@ -1,6 +1,5 @@
 from clize import run
 from subprocess import call
-from hashlib import sha256
 import os
 import glob
 
@@ -22,6 +21,34 @@ from annotator import models
 admin = User.objects.get(username=ADMIN)
 
 def download(query, *, nb=10, max_duration=60, other='', label=None, out=VIDEOS_FOLDER):
+    """
+    Download a set of max `nb` videos from youtube according to a `query` and put
+    them in the folder `out`
+
+    Parameters
+    ----------
+
+    query : str
+        query in youtube
+
+    nb : int
+        max number of videos to download
+
+    max_duration : int
+        maximum duration in secs per video
+
+    other : str
+        other options for youtube-dl
+
+    label : str or None
+        determines the name of the subfolder inside the root folder `out` where to put the videos.
+        if `label` is not provided, the subfolder name is the `query` with spaces replaced by "_".
+        if `label` is provided, then the subfolder name is `label`.
+
+    out : str
+        the root folder where subfolders where the videos are put
+
+    """
     full_query = 'ytsearch{}:{}'.format(nb, query)
     filters = 'duration < {}'.format(max_duration)
     if label is None:
@@ -32,11 +59,23 @@ def download(query, *, nb=10, max_duration=60, other='', label=None, out=VIDEOS_
         os.makedirs(folder)
     except FileExistsError:
         pass
-    cmd = 'youtube-dl --format {} --merge-output-format {} --match-filter="{}" --output="{}" {} "{}"'.format(FORMAT, FORMAT, filters, path, other, full_query)
-    call(cmd, shell=True)
+    cmd = 'youtube-dl --format {} --merge-output-format {} --match-filter="{}" --output="{}" {} "{}"'.format(
+        FORMAT, FORMAT, filters, path, other, full_query)
+    return call(cmd, shell=True)
 
 
 def split_videos(*, folder=VIDEOS_FOLDER, out=VIDEOS_PARTS_FOLDER, duration_sec=5):
+    """
+    Split all videos from the root folder `folder` to chunks and put them in the root folder `out`
+    
+    folder : str
+        root folder where the original videos reside
+
+    out : str
+        the root folder where the chunks are put. `out` will have
+        the same subfolders than `folder`, except that there will be
+        video with `duration_sec` secs instead of the full videos.
+    """
     for filename in glob.glob(os.path.join(folder, '**', '*.{}'.format(FORMAT))):
         out_folder = os.path.dirname(filename).replace(folder, out)
         if not os.path.exists(out_folder):
@@ -54,6 +93,16 @@ def split_videos(*, folder=VIDEOS_FOLDER, out=VIDEOS_PARTS_FOLDER, duration_sec=
 
 
 def add_videos(*, label=None, folder=VIDEOS_FOLDER):
+    """
+    Add a set of videos into the database
+
+    label : str or None
+        if provided, add the videos according to the specific label desired
+        if not, all the videos from all the labels are added.
+
+    folder : str
+        root folder
+    """
     if label is None:
         labels = [l.name for l in models.LabelType.objects.all()]
     else:
