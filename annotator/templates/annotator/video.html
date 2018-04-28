@@ -4,9 +4,15 @@
 
 {% load annotator_extras %}
 
-<video width='640px' height='480px' controls autoplay>
+<video id='video' width='640px' height='480px' controls autoplay muted>
     <source src="{{ video.url | process_url}}" type="video/mp4">
 </video>
+
+<script type='text/javascript'>
+if (!navigator.userAgent.match(/Mobile/)) {
+document.getElementById('video').muted = false;
+}
+</script>
 
 <p>
 {{ video.query_label_type.name | label_to_question }}
