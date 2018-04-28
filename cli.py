@@ -5,15 +5,15 @@ import glob
 
 # setting up django
 import django
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "video_annot.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mysite.settings")
 django.setup()
 from django.contrib.auth.models import User
 
 # Import video settings
-from .site.settings import VIDEOS_FOLDER
-from .site.settings import VIDEOS_PARTS_FOLDER
-from .site.settings import ADMIN
-from .site.settings import FORMAT
+from mysite.settings import VIDEOS_FOLDER
+from mysite.settings import VIDEOS_PARTS_FOLDER
+from mysite.settings import ADMIN
+from mysite.settings import FORMAT
 
 from annotator import models
 
