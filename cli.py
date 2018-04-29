@@ -1,3 +1,4 @@
+import os
 from clize import run
 from subprocess import call
 import os
@@ -127,15 +128,41 @@ def add_videos(*, label=None, folder=VIDEOS_FOLDER):
                 print('Video already exists, passing...')
 
 
+def create_dataset(out, *, type='folder'):
+    labels = models.Label.objects.filter(video_has_label=True)
+    if type == 'folder':
+        for l in labels:
+            source = os.path.abspath(l.video.url)
+            f = os.path.join(out, l.label_type.name)
+            if not os.path.exists(f):
+                os.mkdir(f)
+            dest = os.path.join(f, os.path.basename(l.video.url))
+            dest = os.path.abspath(dest)
+            try:
+                os.symlink(source, dest)
+            except FileExistsError:
+                pass
+    elif type == 'csv':
+        import pandas as pd
+        rows = []
+        for l in labels:
+            url = l.video.url
+            label = l.label_type.name
+            rows.append({'url': url, 'label': label})
+        pd.DataFrame(rows).to_csv(out, index=False, columns=['url', 'label'])
+
+
 def _create_label_type(name):
     return models.LabelType(name=name, user=admin).save()
 
+
 def _slug(s):
     return s.replace(' ', '_')
+
 
 def _unslug(s):
     return s.replace('_', ' ')
 
 
 if __name__ == '__main__':
-    run([download, add_videos, split_videos])
+    run([download, add_videos, split_videos, create_dataset])
