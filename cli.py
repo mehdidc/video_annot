@@ -9,6 +9,8 @@ import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mysite.settings")
 django.setup()
 from django.contrib.auth.models import User
+from django.db.models import Q
+
 
 # Import video settings
 from mysite.settings import VIDEOS_FOLDER
@@ -128,8 +130,17 @@ def add_videos(*, label=None, folder=VIDEOS_FOLDER):
                 print('Video already exists, passing...')
 
 
-def create_dataset(out, *, type='folder'):
-    labels = models.Label.objects.filter(video_has_label=True)
+def create_dataset(out, *, type='folder', only_positive=True, classes=None):
+    if only_positive:
+        labels = models.Label.objects.filter(video_has_label=True)
+    else:
+        labels = models.Label.objects.filter()
+    if classes is not None:
+        classes = classes.split(',')
+        q = Q(label_type__name=classes[0])
+        for cl in classes[1:]:
+            q |= Q(label_type__name=cl)
+        labels = labels.filter(q)
     if type == 'folder':
         for l in labels:
             source = os.path.abspath(l.video.url)
