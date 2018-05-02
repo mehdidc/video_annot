@@ -1,0 +1,19 @@
+{% extends "annotator/base.html" %}
+
+{% block body %}
+
+{% load annotator_extras %}
+
+Please select the class you want to annotate:
+
+<form method='GET' action='/video'>
+        <select name='class'>
+        {% for class_name, class_slug in classes %}
+            <option value="{{ class_slug }}">{{ class_name }}</option>
+        {% endfor %}
+        </select>
+	<input type="submit" value="select" />
+	
+</form>
+
+{% endblock %}
