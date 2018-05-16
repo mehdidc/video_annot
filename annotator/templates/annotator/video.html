@@ -4,7 +4,7 @@
 
 {% load annotator_extras %}
 
-<video id='video' width='640px' height='480px' controls autoplay muted>
+<video id='video' width='640px' height='480px' controls autoplay muted loop>
     <source src="{{ video.url | process_url}}" type="video/mp4">
 </video>
 
