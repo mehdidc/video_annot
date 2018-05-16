@@ -75,18 +75,23 @@ def _insert_annotation_if_post_request(request):
         answer = request.POST.get('submit')
         video_id = int(request.POST.get('video_id'))
         video = Video.objects.get(id=video_id)
-        if answer not in ('Yes', 'No'):
+        if answer not in ('Yes', 'No', 'Not sure'):
             raise ValueError(
                 'Issue in the form: "answer" should be either "Yes" or "No"')
-        answer = True if answer == 'Yes' else False
         nb = Label.objects.filter(user=request.user, video=video).count()
         if nb > 0:
             raise AlreadyAnnotatedError()
+        if answer == 'Yes':
+            value = Label.YES
+        elif answer == 'No':
+            value = Label.NO
+        elif answer == 'Not sure':
+            value = Label.NOT_SURE
         label = Label(
             label_type=video.query_label_type,
             video=video,
             user=request.user,
-            video_has_label=answer,
+            value=value,
         )
         label.save()
 

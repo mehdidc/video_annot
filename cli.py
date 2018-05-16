@@ -174,6 +174,11 @@ def _slug(s):
 def _unslug(s):
     return s.replace('_', ' ')
 
+def migrate():
+    #v0
+    for label in models.Label.objects.all():
+        label.value = 'yes' if label.video_has_label else 'no'
+        label.save()
 
 if __name__ == '__main__':
-    run([download, add_videos, split_videos, create_dataset])
+    run([download, add_videos, split_videos, create_dataset, migrate])

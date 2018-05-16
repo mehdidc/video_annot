@@ -31,9 +31,16 @@ class Video(models.Model):
 
 
 class Label(models.Model):
+    YES = 'yes'
+    NO = 'no'
+    NOT_SURE = 'not_sure'
     # The annotation of a given `video` by a `user`
     label_type = models.ForeignKey(LabelType, on_delete=models.CASCADE)
-    video_has_label = models.BooleanField()
+    video_has_label = models.BooleanField() # deprecated, we use value now
+    value = models.CharField(
+        max_length=255, 
+        choices=((YES, 'Yes'), (NO, 'No'), (NOT_SURE, 'Not sure'))
+    )
     video = models.ForeignKey(Video, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE)

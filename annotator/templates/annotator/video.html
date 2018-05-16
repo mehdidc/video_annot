@@ -22,6 +22,7 @@ document.getElementById('video').muted = false;
         {% csrf_token %}
 	<input class="big" type="submit" name="submit" value="Yes" />
 	<input class="big" type="submit" name="submit" value="No" />
+	<input class="big" type="submit" name="submit" value="Not sure" />
         <input type="hidden" name="video_id" value="{{video.id}}" ?>
 </form>
 
