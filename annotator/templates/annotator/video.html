@@ -31,6 +31,8 @@ $('#video').on('ended', function () {
         <input type="hidden" name="video_id" value="{{video.id}}" ?>
 </form>
 
-<a href='/class_selection'>Back to menu</a>
+<hr />
+<p>Nb of videos annotated for "{{video.query_label_type.name}}": <em>{{nb_annotated}} / {{nb_total}}</em> <br />(remaining : <em>{{nb_remaining}}</em>)</p>
 
+<a href='/class_selection'>Back to menu</a>
 {% endblock %}

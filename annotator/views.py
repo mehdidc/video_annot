@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from .models import Video
 from .models import Label
 from .models import LabelType
-
+from django.contrib.auth.models import User
 
 def index(request):
     return render(request, 'annotator/index.html')
@@ -18,10 +18,12 @@ def nothing(request):
 @login_required
 def class_selection(request):
     classes = []
-    for label_type in LabelType.objects.filter():
+    for label_type in LabelType.objects.all():
+        nb_annotated = _get_nb_annotated_videos(request.user.id, label_type.id)
+        nb_total = _get_total_nb_videos(label_type.id)
         name = label_type.name.replace('_', ' ')
         slug = label_type.name
-        classes.append((name, slug))
+        classes.append((name, slug, nb_annotated, nb_total))
     context = {'classes': classes}
     return render(request, 'annotator/class_selection.html', context)
 
@@ -52,22 +54,23 @@ def random_video(request):
         video = videos[0]
     except IndexError:
         return redirect('nothing')
-    context = {'video': video}
+    nb_annotated = _get_nb_annotated_videos(request.user.id, label_type_id)
+    nb_total = _get_total_nb_videos(label_type_id)
+    nb_remaining = nb_total - nb_annotated
+    context = {
+        'video': video,
+        'nb_annotated': nb_annotated,
+        'nb_remaining': nb_remaining,
+        'nb_total': nb_total,
+    }
     return render(request, 'annotator/video.html', context)
 
+def _get_nb_annotated_videos(user_id, label_type_id):
+    return Label.objects.filter(user__id=user_id).filter(label_type_id=label_type_id).count()
 
-@login_required
-def video(request, video_id):
-    try:
-        _insert_annotation_if_post_request(request)
-    except AlreadyAnnotatedError:
-        return render(request, 'annotator/annotated.html')
-    video = Video.objects.get(id=video_id)
-    nb = Label.objects.filter(user=request.user, video=video).count()
-    if nb > 0:
-        return render(request, 'annotator/annotated.html')
-    context = {'video': video}
-    return render(request, 'annotator/video.html', context)
+
+def _get_total_nb_videos(label_type_id):
+    return Video.objects.filter(query_label_type_id=label_type_id).count()
 
 
 def _insert_annotation_if_post_request(request):

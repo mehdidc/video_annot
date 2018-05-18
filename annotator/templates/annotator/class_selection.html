@@ -8,8 +8,8 @@ Please select the class you want to annotate:
 
 <form method='GET' action='/video'>
         <select name='class'>
-        {% for class_name, class_slug in classes %}
-            <option value="{{ class_slug }}">{{ class_name }}</option>
+        {% for class_name, class_slug, nb_annotated, nb_total in classes %}
+        <option value="{{ class_slug }}">{{ class_name }} ({{nb_annotated}} / {{nb_total}})</option>
         {% endfor %}
         </select>
 	<input type="submit" value="select" />
