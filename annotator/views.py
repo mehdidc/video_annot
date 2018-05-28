@@ -30,12 +30,15 @@ def class_selection(request):
 
 @login_required
 def random_video(request):
+    class_name = request.GET.get('class')
     try:
-        _insert_annotation_if_post_request(request)
+        saved = _insert_annotation_if_post_request(request)
+        if saved:
+            return redirect(request.path_info + '?class={}'.format(class_name))
+
     except AlreadyAnnotatedError:
         return render(request, 'annotator/annotated.html')
 
-    class_name = request.GET.get('class')
     if class_name != '':
         label_type_id = LabelType.objects.filter(name=class_name).first().id
         where = ' AND v.query_label_type_id={}'.format(label_type_id)
@@ -74,6 +77,7 @@ def _get_total_nb_videos(label_type_id):
 
 
 def _insert_annotation_if_post_request(request):
+    saved = False
     if request.method == 'POST':
         answer = request.POST.get('submit')
         video_id = int(request.POST.get('video_id'))
@@ -97,6 +101,8 @@ def _insert_annotation_if_post_request(request):
             value=value,
         )
         label.save()
+        saved = True
+    return saved
 
 
 class AlreadyAnnotatedError(Exception):

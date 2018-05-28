@@ -84,7 +84,7 @@ def split_videos(*, folder=VIDEOS_FOLDER, out=VIDEOS_PARTS_FOLDER, duration_sec=
         if not os.path.exists(out_folder):
             os.makedirs(out_folder)
         filename_without_ext, _ = os.path.splitext(os.path.basename(filename))
-        tpl = 'ffmpeg -i {} -threads 4 -vcodec copy -f segment -segment_time {} {}/{}_part_%06d.{}'
+        tpl = 'ffmpeg -i {} -threads 1n -strict -2 -vcodec copy -f segment -segment_time {} {}/{}_part_%06d.{}'
         cmd = tpl.format(
             filename,
             duration_sec,
@@ -92,10 +92,11 @@ def split_videos(*, folder=VIDEOS_FOLDER, out=VIDEOS_PARTS_FOLDER, duration_sec=
             filename_without_ext,
             FORMAT
         )
+        print(cmd)
         call(cmd, shell=True)
 
 
-def add_videos(*, label=None, folder=VIDEOS_FOLDER):
+def add_videos(*, label=None, folder=VIDEOS_PARTS_FOLDER):
     """
     Add a set of videos into the database
 

@@ -24,11 +24,11 @@ $('#video').on('ended', function () {
 </p>
 
 <form method='POST'>
-        {% csrf_token %}
+    {% csrf_token %}
 	<input class="big" type="submit" name="submit" value="Yes" />
 	<input class="big" type="submit" name="submit" value="No" />
 	<input class="big" type="submit" name="submit" value="Not sure" />
-        <input type="hidden" name="video_id" value="{{video.id}}" ?>
+    <input type="hidden" name="video_id" value="{{video.id}}" ?>
 </form>
 
 <hr />
